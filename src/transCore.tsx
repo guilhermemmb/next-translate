@@ -30,12 +30,16 @@ export default function transCore({
 }): Translate {
   const {
     logger = missingKeyLogger,
+    successfulLogger = successfulKeyLogger,
     // An optional parameter allowEmptyStrings - true as default.
     // If allowEmptyStrings parameter is marked as false,
     // it should log an error when an empty string is attempted to be translated
     // and return the namespace and key as result of the translation.
     allowEmptyStrings = true,
   } = config
+
+  const shouldILogSuccessKeys = shouldLogSuccessfulKeys()
+  const shouldILogMissingKeys = shouldLogMissingKeys()
 
   const t: Translate = (key = '', query, options) => {
     const k = Array.isArray(key) ? key[0] : key
@@ -61,12 +65,14 @@ export default function transCore({
         : options?.fallback || []
 
     if (
-      empty &&
-      (loggerEnvironment === 'both' ||
-        loggerEnvironment ===
-          (typeof window === 'undefined' ? 'node' : 'browser'))
+      loggerEnvironment === 'both' ||
+      loggerEnvironment === (typeof window === 'undefined' ? 'node' : 'browser')
     ) {
-      logger({ namespace, i18nKey })
+      if (empty && shouldILogMissingKeys) {
+        logger({ namespace, i18nKey })
+      } else if (shouldILogSuccessKeys) {
+        successfulLogger({ namespace, i18nKey })
+      }
     }
 
     // Fallbacks
@@ -247,6 +253,25 @@ function objectInterpolation({
   })
 
   return obj
+}
+
+function shouldLogSuccessfulKeys() {
+  if (process.env.NODE_ENV === 'production') return false
+  if (process.env.NEXT_TRANSLATE_LOG_SUCCESSFUL_KEYS === 'true') return true
+
+  return false
+}
+
+function successfulKeyLogger({ namespace, i18nKey }: LoggerProps): void {
+  console.info(
+    `[next-translate-successful] "${namespace}:${i18nKey}" loaded successful.`
+  )
+}
+
+function shouldLogMissingKeys() {
+  if (process.env.NODE_ENV === 'production') return false
+
+  return true
 }
 
 function missingKeyLogger({ namespace, i18nKey }: LoggerProps): void {

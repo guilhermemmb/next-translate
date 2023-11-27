@@ -59,6 +59,7 @@ export interface I18nConfig extends NextI18nConfig {
   localesToIgnore?: string[]
   pages?: Record<string, PageValue>
   logger?: I18nLogger
+  successfulLogger?: I18nLogger
   loggerEnvironment?: 'node' | 'browser' | 'both'
   staticsHoc?: Function
   extensionsRgx?: string
