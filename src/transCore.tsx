@@ -38,9 +38,6 @@ export default function transCore({
     allowEmptyStrings = true,
   } = config
 
-  const shouldILogSuccessKeys = shouldLogSuccessfulKeys()
-  const shouldILogMissingKeys = shouldLogMissingKeys()
-
   const t: Translate = (key = '', query, options) => {
     const k = Array.isArray(key) ? key[0] : key
     const { nsSeparator = ':', loggerEnvironment = 'browser' } = config
@@ -68,9 +65,9 @@ export default function transCore({
       loggerEnvironment === 'both' ||
       loggerEnvironment === (typeof window === 'undefined' ? 'node' : 'browser')
     ) {
-      if (empty && shouldILogMissingKeys) {
+      if (empty && shouldLogMissingKeys()) {
         logger({ namespace, i18nKey })
-      } else if (shouldILogSuccessKeys) {
+      } else if (shouldLogSuccessfulKeys()) {
         successfulLogger({ namespace, i18nKey })
       }
     }
@@ -275,8 +272,6 @@ function shouldLogMissingKeys() {
 }
 
 function missingKeyLogger({ namespace, i18nKey }: LoggerProps): void {
-  if (process.env.NODE_ENV === 'production') return
-
   // This means that instead of "ns:value", "value" has been misspelled (without namespace)
   if (!namespace) {
     console.warn(
