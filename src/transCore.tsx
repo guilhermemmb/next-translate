@@ -65,9 +65,9 @@ export default function transCore({
       loggerEnvironment === 'both' ||
       loggerEnvironment === (typeof window === 'undefined' ? 'node' : 'browser')
     ) {
-      if (empty && shouldLogMissingKeys()) {
+      if (empty) {
         logger({ namespace, i18nKey })
-      } else if (shouldLogSuccessfulKeys()) {
+      } else {
         successfulLogger({ namespace, i18nKey })
       }
     }
@@ -252,26 +252,17 @@ function objectInterpolation({
   return obj
 }
 
-function shouldLogSuccessfulKeys() {
-  if (process.env.NODE_ENV === 'production') return false
-  if (process.env.NEXT_TRANSLATE_LOG_SUCCESSFUL_KEYS === 'true') return true
-
-  return false
-}
-
 function successfulKeyLogger({ namespace, i18nKey }: LoggerProps): void {
+  if (process.env.NODE_ENV === 'production') return
+  if (process.env.NEXT_TRANSLATE_LOG_SUCCESSFUL_LOADED_KEY !== 'true') return
+
   console.info(
-    `[next-translate-successful] "${namespace}:${i18nKey}" loaded successful.`
+    `[next-translate] "${namespace}:${i18nKey}" loaded successfully.`
   )
 }
 
-function shouldLogMissingKeys() {
-  if (process.env.NODE_ENV === 'production') return false
-
-  return true
-}
-
 function missingKeyLogger({ namespace, i18nKey }: LoggerProps): void {
+  if (process.env.NODE_ENV === 'production') return
   // This means that instead of "ns:value", "value" has been misspelled (without namespace)
   if (!namespace) {
     console.warn(
