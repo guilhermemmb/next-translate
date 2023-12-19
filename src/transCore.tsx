@@ -30,6 +30,7 @@ export default function transCore({
 }): Translate {
   const {
     logger = missingKeyLogger,
+    successfulLogger = successfulKeyLogger,
     // An optional parameter allowEmptyStrings - true as default.
     // If allowEmptyStrings parameter is marked as false,
     // it should log an error when an empty string is attempted to be translated
@@ -83,12 +84,14 @@ export default function transCore({
         : options?.fallback || []
 
     if (
-      empty &&
-      (loggerEnvironment === 'both' ||
-        loggerEnvironment ===
-          (typeof window === 'undefined' ? 'node' : 'browser'))
+      loggerEnvironment === 'both' ||
+      loggerEnvironment === (typeof window === 'undefined' ? 'node' : 'browser')
     ) {
-      logger({ namespace, i18nKey })
+      if (empty) {
+        logger({ namespace, i18nKey })
+      } else {
+        successfulLogger({ namespace, i18nKey })
+      }
     }
 
     // Fallbacks
@@ -268,9 +271,16 @@ function objectInterpolation({
   return obj
 }
 
-function missingKeyLogger({ namespace, i18nKey }: LoggerProps): void {
+function successfulKeyLogger({ namespace, i18nKey }: LoggerProps): void {
   if (process.env.NODE_ENV === 'production') return
 
+  console.info(
+    `[next-translate] "${namespace}:${i18nKey}" loaded successfully.`
+  )
+}
+
+function missingKeyLogger({ namespace, i18nKey }: LoggerProps): void {
+  if (process.env.NODE_ENV === 'production') return
   // This means that instead of "ns:value", "value" has been misspelled (without namespace)
   if (!namespace) {
     console.warn(
